@@ -1,0 +1,242 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial;
+    color: #111;
+}
+
+header {
+    background: #09264d;
+    color: white;
+    height: 87px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4%;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 28px;
+}
+
+header p {
+    margin: 3px 0;
+    font-size: 19px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 45px;
+    font-weight: bold;
+}
+
+nav a:hover {
+    color: #ffd400;
+}
+
+.home {
+    background: #eef6ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 170px;
+    padding: 25px;
+}
+
+.home div {
+    width: 570px;
+}
+
+.home h2 {
+    color: #09264d;
+    font-size: 38px;
+    margin: 0 0 8px;
+}
+
+.home h3 {
+    color: #1457b8;
+    font-size: 26px;
+    margin: 0 0 12px;
+}
+
+.home p {
+    font-size: 18px;
+    line-height: 1.5;
+}
+
+.home button,
+form button {
+    background: #09264d;
+    color: white;
+    border: 0;
+    padding: 10px 28px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.home img {
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    border: 6px solid white;
+}
+
+main {
+    max-width: 1160px;
+    margin: auto;
+    padding: 28px 20px;
+}
+
+.top {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.6fr;
+    gap: 45px;
+}
+
+h2 {
+    color: #09264d;
+    font-size: 21px;
+}
+
+p {
+    line-height: 1.5;
+}
+
+li {
+    margin-bottom: 7px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+}
+
+.bottom {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 35px;
+    margin-top: 30px;
+}
+
+.projects {
+    display: flex;
+    gap: 15px;
+}
+
+.card {
+    border: 1px solid #ccc;
+    padding: 12px;
+    width: 33%;
+}
+
+.card h3 {
+    color: #09264d;
+    font-size: 16px;
+}
+
+.card p {
+    font-size: 13px;
+}
+
+.card a {
+    color: #06c;
+    font-weight: bold;
+}
+
+.connect {
+    margin-top: 35px;
+}
+
+.social a {
+    font-size: 22px;
+    margin-right: 25px;
+    text-decoration: none;
+    color: #09264d;
+}
+
+form label {
+    display: block;
+    font-weight: bold;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+input,
+textarea {
+    width: 100%;
+    padding: 9px;
+    margin-top: 4px;
+    border: 1px solid #ccc;
+}
+
+textarea {
+    height: 65px;
+}
+
+form button {
+    margin-top: 10px;
+}
+
+form .reset {
+    background: #ddd;
+    color: #111;
+}
+
+footer {
+    background: #09264d;
+    color: white;
+    text-align: center;
+    padding: 18px;
+    margin-top: 0;
+}
+
+@media (max-width: 800px) {
+    header {
+        height: auto;
+        display: block;
+        padding: 20px;
+    }
+
+    nav {
+        margin-top: 15px;
+    }
+
+    nav a {
+        margin: 0 10px 0 0;
+    }
+
+    .home {
+        display: block;
+        text-align: center;
+    }
+
+    .home div {
+        width: auto;
+    }
+
+    .top,
+    .bottom {
+        grid-template-columns: 1fr;
+    }
+
+    .projects {
+        display: block;
+    }
+
+    .card {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
