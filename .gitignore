@@ -1,0 +1,29 @@
+# OS generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor settings
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs and temp files
+*.log
+*.tmp
+*.temp
+
+# Node / frontend dependencies and build output
+node_modules/
+dist/
+build/
+coverage/
+.npm/
+
+# Environment files
+.env
+.env.*
+
+# Optional: keep local API keys and secrets out of source control
+secrets/
