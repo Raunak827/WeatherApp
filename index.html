@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather App</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -23,16 +21,28 @@
         <section class="weather-card" id="weather-card" style="display: none;">
             <h2 id="location">Delhi, India</h2>
             <div id="weather-icon">☀️</div>
-            <h3 id="temperature">32°C</h3>
+            <div class="temperature-container">
+                <h3 id="temperature">32°C</h3>
+                <p id="feels-like">Feels like: 38°C</p>
+            </div>
             <p id="condition">Clear</p>
             
             <div class="weather-details">
                 <p id="humidity">Humidity: 45%</p>
                 <p id="wind-speed">Wind: 14 km/h</p>
+                <p id="temp-min-max">Min: 28°C / Max: 35°C</p>
+            </div>
+            <div class="advisory-section" id="advisory-section">
+                <h3>Advice</h3>
+                <ul id="advisory-list">
+                    <li>Very high heat: avoid going out between 12 and 4 PM and drink water regularly.</li>
+                    <li>High humidity: clothes will not dry outdoors.</li>
+                </ul>
             </div>
         </section>
     </main>
 
+    <script src="advisory-rules.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

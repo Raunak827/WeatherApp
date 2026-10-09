@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Login Page</title>
+    <style>
+        div{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top:100px; 
+            gap: 30px;
+            height: min-content;
+            justify-content: center;
+            border: 1px solid rgb(211, 209, 209);
+            
+            
+        }
+        body{
+            width: 50%;
+            margin: auto;
+            
+        }
+        label{
+            margin-right: 10px;
+        }
+        .login{
+            padding: 3px 85px;
+            background-color: green;
+            color: white;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div>
+        <h1>Login</h1>
+        <form id="myform">
+            
+            <label for="userid" style="margin-bottom: 15px;">ID</label><br>
+            <input type="text" id="userid" ><br>
+            <span class="error" id="namerror"></span><br>
+            <label for="pass">password</label><br>
+            <input type="password" id="pass" ><br>
+            <span class="error" id="passerror"></span><br>
+            <input type="submit" value="Login" class="login">
+        </form>
+    </div>
+    <script>
+        document.getElementById('myform').addEventListener("submit",function(event){
+            event.preventDefault();
+            let name=document.getElementById('userid').value;
+            let password=document.getElementById('pass').value;
+            let valid=true;
+            document.getElementById('namerror').textContent="";
+            document.getElementById('passerror').textContent="";
+            if(name.trim()===""){
+                document.getElementById('namerror').textContent="Name is req";
+                valid=false;
+                document.getElementById('userid').style.border="1px solid red"
+            }
+            if(password.trim()===""){
+                document.getElementById('passerror').textContent="Passord is req";
+                valid=false;
+                document.getElementById('pass').style.border="1px solid red"
+
+            }
+            if(valid){
+                alert("Form submitted");
+                document.getElementById("myform").reset();
+            }
+        })
+    </script>
+    
+
+</body>
+
+</html>
