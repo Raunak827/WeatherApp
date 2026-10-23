@@ -124,6 +124,7 @@ main {
 }
 
 #temp-min-max {
+    grid-column: span 2;
     border-top: 1px solid #eaeaea;
     padding-top: 8px;
     color: #7f8c8d;
