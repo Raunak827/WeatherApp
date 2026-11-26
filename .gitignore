@@ -14,19 +14,5 @@ Desktop.ini
 *.tmp
 *.temp
 
-# Node / frontend dependencies and build output
-node_modules/
-dist/
-build/
-coverage/
-.npm/
-
-# Environment files
-.env
-.env.*
-
-# Optional: keep local API keys and secrets out of source control
-secrets/
-
 # Local API key config — copy config.example.js → config.js and add your key
 config.js

@@ -27,6 +27,7 @@
  */
 const API_KEY = (window.APP_CONFIG && window.APP_CONFIG.API_KEY) || '';
 const API_BASE = 'https://api.openweathermap.org/data/2.5/weather';
+const FORECAST_BASE = 'https://api.openweathermap.org/data/2.5/forecast';
 const GEO_BASE = 'https://api.openweathermap.org/geo/1.0/reverse';
 
 /** Maximum search-history entries to store. */
@@ -38,6 +39,7 @@ const MAX_HISTORY = 5;
 
 /** Cached raw API data (Celsius-based) for unit conversions. */
 let _rawData = null;
+let _forecastData = null;
 
 /** Current display unit: 'C' | 'F' */
 let _unit = localStorage.getItem('unit') || 'C';
@@ -75,9 +77,10 @@ const tempMinMaxEl   = $('temp-min-max');
 const visibilityEl   = $('visibility');
 const advisoryList   = $('advisory-list');
 const lastUpdatedEl  = $('last-updated');
-const favBtn         = $('fav-btn');
-const favouritesRow  = $('favourites-row');
-const favChips       = $('fav-chips');
+const hourlyCard     = $('hourly-card');
+const hourlyList     = $('hourly-list');
+const dailyCard      = $('daily-card');
+const dailyList      = $('daily-list');
 const bgLayer        = $('bg-layer');
 const emptyState     = $('empty-state');
 const menuBtn        = $('menu-btn');
@@ -120,8 +123,9 @@ function applyUnit(unit) {
   _unit = unit;
   unitLabel.textContent = `°${unit}`;
   localStorage.setItem('unit', unit);
-  if (_rawData) renderWeather(_rawData);   // re-render with new unit
-  renderHistory();                         // update drawer & chip temps
+  if (_rawData) renderWeather(_rawData);       // re-render with new unit
+  if (_forecastData) renderForecast(_forecastData);
+  renderHistory();                             // update drawer & chip temps
 }
 
 unitToggle.addEventListener('click', () => {
@@ -171,6 +175,8 @@ function getLocalTime(timezoneOffsetSeconds) {
 
 function showError(msg) {
   weatherCard.hidden   = true;
+  hourlyCard.hidden    = true;
+  dailyCard.hidden     = true;
   skeletonCard.hidden  = true;
   if (emptyState && !_rawData) emptyState.hidden = false;
   errorMessage.textContent = msg;
@@ -188,6 +194,8 @@ function setLoading(loading) {
   if (loading) {
     hideError();
     weatherCard.hidden  = true;
+    hourlyCard.hidden   = true;
+    dailyCard.hidden    = true;
     if (emptyState) emptyState.hidden = true;
     skeletonCard.hidden = false;
     searchBtn.classList.add('loading');
@@ -344,58 +352,6 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* ═══════════════════════════════════════════════════════════════
-   FAVOURITE CITIES
-   ═══════════════════════════════════════════════════════════════ */
-
-function getFavourites() {
-  try { return JSON.parse(localStorage.getItem('favourites') || '[]'); }
-  catch { return []; }
-}
-
-function isFavourite(city) {
-  return getFavourites().some((c) => c.toLowerCase() === city.toLowerCase());
-}
-
-function toggleFavourite(city) {
-  let favs = getFavourites();
-  if (isFavourite(city)) {
-    favs = favs.filter((c) => c.toLowerCase() !== city.toLowerCase());
-  } else {
-    favs.unshift(city);
-  }
-  localStorage.setItem('favourites', JSON.stringify(favs));
-  renderFavourites();
-  updateFavBtn(city);
-}
-
-function updateFavBtn(city) {
-  const fav = isFavourite(city);
-  favBtn.textContent = fav ? '⭐' : '☆';
-  favBtn.setAttribute('aria-pressed', String(fav));
-  favBtn.title = fav ? 'Remove from favourites' : 'Add to favourites';
-}
-
-function renderFavourites() {
-  const favs = getFavourites();
-  if (favs.length === 0) { favouritesRow.hidden = true; return; }
-  favouritesRow.hidden = false;
-  favChips.innerHTML = '';
-  favs.forEach((city) => {
-    const chip = document.createElement('button');
-    chip.className = 'chip chip--fav';
-    chip.textContent = `⭐ ${city}`;
-    chip.setAttribute('aria-label', `Search favourite city ${city}`);
-    chip.addEventListener('click', () => fetchWeatherByCity(city));
-    favChips.appendChild(chip);
-  });
-}
-
-favBtn.addEventListener('click', () => {
-  if (!_rawData) return;
-  toggleFavourite(_rawData.name);
-});
-
-/* ═══════════════════════════════════════════════════════════════
    WEATHER RENDERING
    ═══════════════════════════════════════════════════════════════ */
 
@@ -451,9 +407,6 @@ function renderWeather(data) {
   // Dynamic background
   applyBackground(conditionGroup);
 
-  // Favourite button state
-  updateFavBtn(name);
-
   // Show card, hide empty state
   if (emptyState) emptyState.hidden = true;
   weatherCard.hidden = false;
@@ -485,6 +438,100 @@ function renderAdvisories(advisories) {
     li.innerHTML = `<span class="adv-icon" aria-hidden="true">${rule.icon}</span><span>${rule.message}</span>`;
     advisoryList.appendChild(li);
   });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HOURLY & DAILY FORECAST RENDERING
+   ═══════════════════════════════════════════════════════════════ */
+
+function formatForecastHour(dtSec, tzOffsetSec) {
+  const d = new Date((dtSec + tzOffsetSec) * 1000);
+  const h = d.getUTCHours();
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  return `${hour12} ${suffix}`;
+}
+
+function getDateKey(dtSec, tzOffsetSec) {
+  const d = new Date((dtSec + tzOffsetSec) * 1000);
+  return `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
+}
+
+function formatDayName(dtSec, tzOffsetSec, isFirst) {
+  if (isFirst) return 'Today';
+  const d = new Date((dtSec + tzOffsetSec) * 1000);
+  return d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+}
+
+function renderForecast(forecastData) {
+  const list = forecastData?.list;
+  if (!Array.isArray(list) || list.length === 0) {
+    hourlyCard.hidden = true;
+    dailyCard.hidden  = true;
+    return;
+  }
+
+  const tz = forecastData.city?.timezone ?? 0;
+
+  // 1. Hourly forecast — next 8 intervals (24 hours in 3h steps)
+  hourlyList.innerHTML = '';
+  list.slice(0, 8).forEach((item) => {
+    const condId = item.weather?.[0]?.id ?? 800;
+    const group  = getConditionGroup(condId);
+    const emoji  = getConditionEmoji(group, condId);
+    const popPct = Math.round((item.pop ?? 0) * 100);
+
+    const card = document.createElement('div');
+    card.className = 'hourly-item';
+    card.innerHTML = `
+      <span class="hourly-time">${formatForecastHour(item.dt, tz)}</span>
+      <span class="hourly-icon" aria-hidden="true">${emoji}</span>
+      <span class="hourly-temp">${displayTemp(item.main.temp)}</span>
+      <span class="hourly-pop">${popPct >= 10 ? `💧 ${popPct}%` : ''}</span>
+    `;
+    hourlyList.appendChild(card);
+  });
+  hourlyCard.hidden = false;
+
+  // 2. Daily forecast — group 3h slots by local date (up to 5 days)
+  const dayMap = new Map();
+  list.forEach((item) => {
+    const key = getDateKey(item.dt, tz);
+    if (!dayMap.has(key)) dayMap.set(key, []);
+    dayMap.get(key).push(item);
+  });
+
+  dailyList.innerHTML = '';
+  const todayKey = getDateKey(Math.floor(Date.now() / 1000), tz);
+
+  Array.from(dayMap.entries()).slice(0, 5).forEach(([key, slots], idx) => {
+    const minC   = Math.min(...slots.map((s) => s.main.temp_min));
+    const maxC   = Math.max(...slots.map((s) => s.main.temp_max));
+    const maxPop = Math.round(Math.max(...slots.map((s) => s.pop ?? 0)) * 100);
+
+    // Pick midday slot (or middle slot) for representative icon & condition
+    const midSlot = slots[Math.floor(slots.length / 2)];
+    const condId  = midSlot.weather?.[0]?.id ?? 800;
+    const group   = getConditionGroup(condId);
+    const emoji   = getConditionEmoji(group, condId);
+    const condTxt = midSlot.weather?.[0]?.description ?? '';
+    const dayName = formatDayName(slots[0].dt, tz, idx === 0 && key === todayKey);
+
+    const li = document.createElement('li');
+    li.className = 'daily-row';
+    li.innerHTML = `
+      <span class="daily-day">${dayName}</span>
+      <span class="daily-icon" aria-hidden="true">${emoji}</span>
+      <span class="daily-pop">${maxPop >= 10 ? `💧 ${maxPop}%` : ''}</span>
+      <span class="daily-cond">${condTxt}</span>
+      <div class="daily-temps">
+        <span class="daily-low">${displayTemp(minC)}</span>
+        <span class="daily-high">${displayTemp(maxC)}</span>
+      </div>
+    `;
+    dailyList.appendChild(li);
+  });
+  dailyCard.hidden = false;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -543,7 +590,12 @@ async function fetchWeatherByCity(city) {
     setLoading(false);
     hideError();
     renderWeather(data);
-    saveHistory(data);                // save city, temp, climate & icon
+    saveHistory(data);
+
+    fetchForecast(`${FORECAST_BASE}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);                // save city, temp, climate & icon
+
+    // Fetch 5-day / 3-hour forecast in parallel/non-blocking
+    fetchForecast(`${FORECAST_BASE}?q=${encodeURIComponent(trimmed)}&appid=${API_KEY}&units=metric`);
 
   } catch (err) {
     setLoading(false);
@@ -582,10 +634,32 @@ async function fetchWeatherByCoords(lat, lon) {
     renderWeather(data);
     saveHistory(data);
 
+    fetchForecast(`${FORECAST_BASE}?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
+
   } catch (err) {
     setLoading(false);
     showError('Could not reach the weather service. Please check your internet connection.');
     console.error('[Wheather] fetch error:', err);
+  }
+}
+
+async function fetchForecast(url) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      _forecastData = null;
+      hourlyCard.hidden = true;
+      dailyCard.hidden  = true;
+      return;
+    }
+    const fData = await res.json();
+    _forecastData = fData;
+    renderForecast(fData);
+  } catch (err) {
+    console.warn('[Wheather] forecast fetch failed:', err);
+    _forecastData = null;
+    hourlyCard.hidden = true;
+    dailyCard.hidden  = true;
   }
 }
 
@@ -651,6 +725,5 @@ document.addEventListener('keydown', (e) => {
   applyTheme(_theme);
   applyUnit(_unit);
   renderHistory();
-  renderFavourites();
   applyBackground(null);       // default gradient on load
 })();

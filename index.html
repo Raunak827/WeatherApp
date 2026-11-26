@@ -120,12 +120,6 @@
           <span id="error-message"></span>
         </div>
 
-        <!-- Favourites -->
-        <div class="side-block" id="favourites-row" hidden>
-          <p class="side-block__label">⭐ Favourites</p>
-          <div class="history-chips" id="fav-chips" aria-label="Favourite cities"></div>
-        </div>
-
         <!-- Desktop-only tip -->
         <div class="keyboard-tip" aria-hidden="true">
           Press <kbd>/</kbd> to focus search
@@ -159,15 +153,12 @@
         <!-- Weather Card -->
         <section class="weather-card" id="weather-card" hidden aria-label="Weather information">
 
-          <!-- Location + Time + Fav -->
+          <!-- Location + Time -->
           <div class="card-header">
             <div class="card-location">
               <h2 id="location" class="location-name"></h2>
               <p id="local-time" class="local-time"></p>
             </div>
-            <button id="fav-btn" class="icon-btn fav-btn" title="Save as favourite" aria-label="Add to favourites" aria-pressed="false">
-              ☆
-            </button>
           </div>
 
           <!-- Hero: Icon + Temp + Condition -->
@@ -215,6 +206,24 @@
           </div>
 
           <p class="card-footer" id="last-updated"></p>
+        </section>
+
+        <!-- Hourly Forecast (Next 24h) -->
+        <section class="forecast-card" id="hourly-card" hidden aria-label="Hourly forecast">
+          <div class="forecast-header">
+            <span aria-hidden="true">⏱️</span>
+            <h3 class="forecast-title">Hourly Forecast</h3>
+          </div>
+          <div class="hourly-scroll" id="hourly-list"></div>
+        </section>
+
+        <!-- Daily Forecast (5-Day) -->
+        <section class="forecast-card" id="daily-card" hidden aria-label="Daily forecast">
+          <div class="forecast-header">
+            <span aria-hidden="true">📅</span>
+            <h3 class="forecast-title">5-Day Forecast</h3>
+          </div>
+          <ul class="daily-list" id="daily-list"></ul>
         </section>
 
         <!-- Empty state (shown before first search on desktop) -->

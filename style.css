@@ -6,6 +6,7 @@
 
 /* ── RESET ─────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
 
 /* ── DESIGN TOKENS ─────────────────────────────────────────── */
 :root {
@@ -887,6 +888,165 @@ body {
   text-align: right;
 }
 
+/* ── FORECAST CARDS (HOURLY & DAILY) ───────────────────────── */
+.forecast-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 20px 24px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: cardPop 0.38s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.forecast-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.forecast-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--txt-2);
+}
+
+/* Hourly horizontal strip */
+.hourly-scroll {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(78px, 1fr);
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.hourly-item {
+  background: var(--bg-stats);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  transition: background var(--ease), transform var(--ease);
+}
+
+.hourly-item:hover {
+  background: var(--bg-glass-hover);
+  transform: translateY(-2px);
+}
+
+.hourly-time {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--txt-m);
+  white-space: nowrap;
+}
+
+.hourly-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.hourly-temp {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--txt);
+}
+
+.hourly-pop {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--info);
+  min-height: 14px;
+}
+
+/* Daily vertical list */
+.daily-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.daily-row {
+  display: grid;
+  grid-template-columns: 76px 36px 46px 1fr 110px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-stats);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  transition: background var(--ease);
+}
+
+.daily-row:hover {
+  background: var(--bg-glass-hover);
+}
+
+.daily-day {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--txt);
+}
+
+.daily-icon {
+  font-size: 1.5rem;
+  text-align: center;
+  line-height: 1;
+}
+
+.daily-pop {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--info);
+  text-align: center;
+}
+
+.daily-cond {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--txt-2);
+  text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.daily-temps {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.daily-low  { color: var(--txt-m); font-weight: 600; }
+.daily-high { color: var(--txt); }
+
+@media (max-width: 520px) {
+  .forecast-card { padding: 16px; }
+  .daily-row {
+    grid-template-columns: 60px 32px 1fr 90px;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .daily-pop { display: none; }
+}
+
 /* ── EMPTY STATE (desktop right panel before first search) ─── */
 .empty-state {
   display: flex;
@@ -926,6 +1086,7 @@ body {
   outline-offset: 3px;
   border-radius: 4px;
 }
+.search-input:focus-visible { outline: none; }
 button:focus:not(:focus-visible) { outline: none; }
 
 /* ══════════════════════════════════════════════════════════════
