@@ -76,12 +76,18 @@ const visibilityEl   = $('visibility');
 const advisoryList   = $('advisory-list');
 const lastUpdatedEl  = $('last-updated');
 const favBtn         = $('fav-btn');
-const historyRow     = $('history-row');
-const historyChips   = $('history-chips');
-const clearHistoryBtn= $('clear-history-btn');
 const favouritesRow  = $('favourites-row');
 const favChips       = $('fav-chips');
 const bgLayer        = $('bg-layer');
+const emptyState     = $('empty-state');
+const menuBtn        = $('menu-btn');
+const recentDrawer   = $('recent-drawer');
+const drawerBackdrop = $('drawer-backdrop');
+const drawerCloseBtn = $('drawer-close-btn');
+const drawerList     = $('drawer-history-list');
+const drawerEmpty    = $('drawer-empty');
+const drawerFooter   = $('drawer-footer');
+const drawerClearBtn = $('drawer-clear-btn');
 
 /* ═══════════════════════════════════════════════════════════════
    UNIT HELPERS
@@ -115,6 +121,7 @@ function applyUnit(unit) {
   unitLabel.textContent = `°${unit}`;
   localStorage.setItem('unit', unit);
   if (_rawData) renderWeather(_rawData);   // re-render with new unit
+  renderHistory();                         // update drawer & chip temps
 }
 
 unitToggle.addEventListener('click', () => {
@@ -165,6 +172,7 @@ function getLocalTime(timezoneOffsetSeconds) {
 function showError(msg) {
   weatherCard.hidden   = true;
   skeletonCard.hidden  = true;
+  if (emptyState && !_rawData) emptyState.hidden = false;
   errorMessage.textContent = msg;
   errorBanner.hidden   = false;
   errorBanner.classList.add('banner--shake');
@@ -180,6 +188,7 @@ function setLoading(loading) {
   if (loading) {
     hideError();
     weatherCard.hidden  = true;
+    if (emptyState) emptyState.hidden = true;
     skeletonCard.hidden = false;
     searchBtn.classList.add('loading');
     searchBtn.disabled = true;
@@ -205,17 +214,38 @@ clearBtn.addEventListener('click', () => {
 });
 
 /* ═══════════════════════════════════════════════════════════════
-   SEARCH HISTORY
+   SEARCH HISTORY & RECENT SEARCHES MENU DRAWER
    ═══════════════════════════════════════════════════════════════ */
 
 function getHistory() {
-  try { return JSON.parse(localStorage.getItem('history') || '[]'); }
-  catch { return []; }
+  try {
+    const raw = JSON.parse(localStorage.getItem('history') || '[]');
+    // Normalise legacy string entries if any exist
+    return raw.map((item) =>
+      typeof item === 'string'
+        ? { name: item, country: '', tempC: null, climate: '', icon: '🌍' }
+        : item
+    );
+  } catch {
+    return [];
+  }
 }
 
-function saveHistory(city) {
-  let hist = getHistory().filter((c) => c.toLowerCase() !== city.toLowerCase());
-  hist.unshift(city);
+function saveHistory(data) {
+  const conditionId    = data.weather?.[0]?.id ?? 800;
+  const conditionGroup = getConditionGroup(conditionId);
+  const entry = {
+    name    : data.name,
+    country : data.sys?.country ?? '',
+    tempC   : data.main?.temp ?? null,
+    climate : data.weather?.[0]?.description ?? '',
+    icon    : getConditionEmoji(conditionGroup, conditionId),
+  };
+
+  let hist = getHistory().filter(
+    (item) => item.name.toLowerCase() !== entry.name.toLowerCase()
+  );
+  hist.unshift(entry);
   if (hist.length > MAX_HISTORY) hist = hist.slice(0, MAX_HISTORY);
   localStorage.setItem('history', JSON.stringify(hist));
   renderHistory();
@@ -223,22 +253,94 @@ function saveHistory(city) {
 
 function renderHistory() {
   const hist = getHistory();
-  if (hist.length === 0) { historyRow.hidden = true; return; }
-  historyRow.hidden = false;
-  historyChips.innerHTML = '';
-  hist.forEach((city) => {
-    const chip = document.createElement('button');
-    chip.className = 'chip';
-    chip.textContent = city;
-    chip.setAttribute('aria-label', `Search ${city}`);
-    chip.addEventListener('click', () => fetchWeatherByCity(city));
-    historyChips.appendChild(chip);
+
+  // Top-left 3-line menu drawer list
+  drawerList.innerHTML = '';
+  if (hist.length === 0) {
+    drawerEmpty.hidden  = false;
+    drawerFooter.hidden = true;
+    return;
+  }
+
+  drawerEmpty.hidden  = true;
+  drawerFooter.hidden = false;
+
+  hist.forEach((item) => {
+    const li  = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.className = 'drawer-item';
+    const locationLabel = item.country ? `${item.name}, ${item.country}` : item.name;
+    const tempLabel     = item.tempC !== null ? displayTemp(item.tempC) : '—';
+    const climateLabel  = item.climate || 'Weather saved';
+
+    btn.setAttribute('aria-label', `Load weather for ${locationLabel}`);
+    btn.innerHTML = `
+      <div class="drawer-item__left">
+        <span class="drawer-item__icon" aria-hidden="true">${item.icon || '🌤️'}</span>
+        <div class="drawer-item__info">
+          <span class="drawer-item__city">${locationLabel}</span>
+          <span class="drawer-item__climate">${climateLabel}</span>
+        </div>
+      </div>
+      <span class="drawer-item__temp">${tempLabel}</span>
+    `;
+
+    btn.addEventListener('click', () => {
+      closeDrawer();
+      fetchWeatherByCity(item.name);
+    });
+
+    li.appendChild(btn);
+    drawerList.appendChild(li);
   });
 }
 
-clearHistoryBtn.addEventListener('click', () => {
+function clearHistory() {
   localStorage.removeItem('history');
   renderHistory();
+}
+
+drawerClearBtn.addEventListener('click', clearHistory);
+
+function openDrawer() {
+  renderHistory();
+  recentDrawer.hidden   = false;
+  drawerBackdrop.hidden = false;
+  // Trigger CSS transition on next frame
+  requestAnimationFrame(() => {
+    recentDrawer.classList.add('open');
+    drawerBackdrop.classList.add('open');
+  });
+  menuBtn.setAttribute('aria-expanded', 'true');
+  drawerCloseBtn.focus();
+}
+
+function closeDrawer() {
+  recentDrawer.classList.remove('open');
+  drawerBackdrop.classList.remove('open');
+  menuBtn.setAttribute('aria-expanded', 'false');
+  setTimeout(() => {
+    if (!recentDrawer.classList.contains('open')) {
+      recentDrawer.hidden   = true;
+      drawerBackdrop.hidden = true;
+    }
+  }, 280);
+}
+
+menuBtn.addEventListener('click', () => {
+  const isOpen = recentDrawer.classList.contains('open');
+  if (isOpen) closeDrawer();
+  else openDrawer();
+});
+
+drawerCloseBtn.addEventListener('click', closeDrawer);
+drawerBackdrop.addEventListener('click', closeDrawer);
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && recentDrawer.classList.contains('open')) {
+    closeDrawer();
+    menuBtn.focus();
+  }
 });
 
 /* ═══════════════════════════════════════════════════════════════
@@ -352,7 +454,8 @@ function renderWeather(data) {
   // Favourite button state
   updateFavBtn(name);
 
-  // Show card
+  // Show card, hide empty state
+  if (emptyState) emptyState.hidden = true;
   weatherCard.hidden = false;
   weatherCard.classList.remove('card--animate');
   void weatherCard.offsetWidth;        // force reflow for animation replay
@@ -440,7 +543,7 @@ async function fetchWeatherByCity(city) {
     setLoading(false);
     hideError();
     renderWeather(data);
-    saveHistory(data.name);           // save canonical city name from API
+    saveHistory(data);                // save city, temp, climate & icon
 
   } catch (err) {
     setLoading(false);
@@ -477,7 +580,7 @@ async function fetchWeatherByCoords(lat, lon) {
     setLoading(false);
     hideError();
     renderWeather(data);
-    saveHistory(data.name);
+    saveHistory(data);
 
   } catch (err) {
     setLoading(false);
