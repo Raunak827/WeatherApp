@@ -1,48 +1,180 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-    <title>Weather App</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wheather — Smart Weather Advisory</title>
+  <meta name="description" content="Real-time weather with smart, rule-based advisories for your city." />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-    <header>
-        <h1>Wheather</h1>
+  <!-- ═══════════════════ BACKGROUND LAYER ═══════════════════ -->
+  <div class="bg-layer" id="bg-layer" aria-hidden="true">
+    <div class="bg-orb bg-orb--1"></div>
+    <div class="bg-orb bg-orb--2"></div>
+    <div class="bg-orb bg-orb--3"></div>
+  </div>
+
+  <!-- ═══════════════════ APP SHELL ═══════════════════ -->
+  <div class="app-shell">
+
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="app-logo">
+        <span class="logo-icon" aria-hidden="true">🌤️</span>
+        <span class="logo-text">Wheather</span>
+      </div>
+      <div class="header-controls">
+        <button id="unit-toggle" class="icon-btn" title="Toggle °C / °F" aria-label="Toggle temperature unit">
+          <span id="unit-label">°C</span>
+        </button>
+        <button id="theme-toggle" class="icon-btn" title="Toggle dark mode" aria-label="Toggle dark mode">
+          <span id="theme-icon">🌙</span>
+        </button>
+      </div>
     </header>
 
-    <main>
-        <section class="search-section">
-            <input type="text" id="city-input" placeholder="Enter city name">
-            <button id="search-btn">Search</button>
-        </section>
+    <!-- MAIN CONTENT -->
+    <main class="app-main">
 
-        <p id="error-message" style="display: none;"></p>
+      <!-- ── SEARCH SECTION ── -->
+      <section class="search-section" aria-label="City search">
+        <div class="search-box">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input
+            type="text"
+            id="city-input"
+            class="search-input"
+            placeholder="Search a city…"
+            autocomplete="off"
+            aria-label="City name"
+            maxlength="100"
+          />
+          <button id="clear-btn" class="clear-btn" title="Clear" aria-label="Clear input" hidden>✕</button>
+        </div>
+        <button id="search-btn" class="search-btn" aria-label="Search weather">
+          <span class="btn-text">Search</span>
+          <span class="btn-spinner" aria-hidden="true"></span>
+        </button>
+        <button id="location-btn" class="icon-btn location-btn" title="Use my location" aria-label="Use current location">
+          📍
+        </button>
+      </section>
 
-        <section class="weather-card" id="weather-card" style="display: none;">
-            <h2 id="location">Delhi, India</h2>
-            <div id="weather-icon">☀️</div>
-            <div class="temperature-container">
-                <h3 id="temperature">32°C</h3>
-                <p id="feels-like">Feels like: 38°C</p>
-            </div>
-            <p id="condition">Clear</p>
-            
-            <div class="weather-details">
-                <p id="humidity">Humidity: 45%</p>
-                <p id="wind-speed">Wind: 14 km/h</p>
-                <p id="temp-min-max">Min: 28°C / Max: 35°C</p>
-            </div>
-            <div class="advisory-section" id="advisory-section">
-                <h3>Advice</h3>
-                <ul id="advisory-list">
-                    <li>Very high heat: avoid going out between 12 and 4 PM and drink water regularly.</li>
-                    <li>High humidity: clothes will not dry outdoors.</li>
-                </ul>
-            </div>
-        </section>
+      <!-- ── SEARCH HISTORY ── -->
+      <div class="history-row" id="history-row" hidden>
+        <span class="history-label">Recent:</span>
+        <div class="history-chips" id="history-chips" aria-label="Recent searches"></div>
+        <button id="clear-history-btn" class="ghost-btn" aria-label="Clear history">Clear</button>
+      </div>
+
+      <!-- ── ERROR / INFO BANNER ── -->
+      <div class="banner banner--error" id="error-banner" role="alert" aria-live="polite" hidden>
+        <span class="banner-icon" aria-hidden="true">⚠️</span>
+        <span id="error-message"></span>
+      </div>
+
+      <!-- ── LOADING SKELETON ── -->
+      <div class="skeleton-card" id="skeleton-card" hidden aria-busy="true" aria-label="Loading weather data">
+        <div class="sk sk--title"></div>
+        <div class="sk sk--icon"></div>
+        <div class="sk sk--temp"></div>
+        <div class="sk sk--row">
+          <div class="sk sk--chip"></div>
+          <div class="sk sk--chip"></div>
+        </div>
+        <div class="sk sk--advisory"></div>
+      </div>
+
+      <!-- ── WEATHER CARD ── -->
+      <section class="weather-card" id="weather-card" hidden aria-label="Weather information">
+
+        <!-- Location + Time -->
+        <div class="card-header">
+          <div class="card-location">
+            <h2 id="location" class="location-name"></h2>
+            <p id="local-time" class="local-time"></p>
+          </div>
+          <button id="fav-btn" class="icon-btn fav-btn" title="Save as favourite" aria-label="Add to favourites" aria-pressed="false">
+            ☆
+          </button>
+        </div>
+
+        <!-- Icon + Temperature -->
+        <div class="card-hero">
+          <div id="weather-icon" class="weather-emoji" role="img" aria-label="Weather icon"></div>
+          <div class="hero-temps">
+            <div id="temperature" class="temp-main"></div>
+            <div id="feels-like" class="temp-feels"></div>
+          </div>
+        </div>
+
+        <!-- Condition badge -->
+        <div id="condition" class="condition-badge"></div>
+
+        <!-- Stats grid -->
+        <div class="stats-grid">
+          <div class="stat-cell">
+            <span class="stat-icon" aria-hidden="true">💧</span>
+            <span class="stat-label">Humidity</span>
+            <span class="stat-value" id="humidity"></span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-icon" aria-hidden="true">💨</span>
+            <span class="stat-label">Wind</span>
+            <span class="stat-value" id="wind-speed"></span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-icon" aria-hidden="true">🌡️</span>
+            <span class="stat-label">Min / Max</span>
+            <span class="stat-value" id="temp-min-max"></span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-icon" aria-hidden="true">👁️</span>
+            <span class="stat-label">Visibility</span>
+            <span class="stat-value" id="visibility"></span>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="card-divider" aria-hidden="true"></div>
+
+        <!-- Advisory Section -->
+        <div class="advisory-section" id="advisory-section" aria-label="Weather advisories">
+          <div class="advisory-header">
+            <span class="advisory-badge" aria-hidden="true">💡</span>
+            <h3 class="advisory-title">Advisories</h3>
+          </div>
+          <ul class="advisory-list" id="advisory-list" aria-label="Advisory messages"></ul>
+        </div>
+
+        <!-- Footer -->
+        <p class="card-footer" id="last-updated"></p>
+      </section>
+
+      <!-- ── FAVOURITES ── -->
+      <div class="favourites-row" id="favourites-row" hidden>
+        <span class="history-label">⭐ Favourites:</span>
+        <div class="history-chips" id="fav-chips" aria-label="Favourite cities"></div>
+      </div>
+
     </main>
 
-    <script src="advisory-rules.js"></script>
-    <script src="script.js"></script>
+    <!-- FOOTER -->
+    <footer class="app-footer">
+      <p>Data from <a href="https://openweathermap.org" target="_blank" rel="noopener">OpenWeatherMap</a> · Advisories are informational only, not medical advice.</p>
+    </footer>
+
+  </div><!-- /app-shell -->
+
+  <!-- config.js is gitignored — copy config.example.js → config.js with your key -->
+  <script src="config.js"></script>
+  <script src="advisory-rules.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

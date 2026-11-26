@@ -27,3 +27,6 @@ coverage/
 
 # Optional: keep local API keys and secrets out of source control
 secrets/
+
+# Local API key config — copy config.example.js → config.js and add your key
+config.js
